@@ -2,4 +2,4 @@
 /.venv-mkdocs
 /.idea
 /*.iml
-
+/dist
