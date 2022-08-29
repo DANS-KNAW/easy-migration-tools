@@ -11,6 +11,7 @@ packages = [
 python = "^3.6"
 requests = "^2.26.0"
 PyYAML = "^6.0"
+bs4 = "^0.0.1"
 
 [tool.poetry.dev-dependencies]
 

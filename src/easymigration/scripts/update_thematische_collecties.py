@@ -5,6 +5,7 @@ import logging
 import argparse
 import urllib.parse
 from easymigration.config import init
+from bs4 import BeautifulSoup
 
 EASY_API = "http://deasy.dans.knaw.nl:8080/"
 JUMP_OF_ID = EASY_API + "fedora/risearch"
@@ -30,21 +31,21 @@ def update_thematische_collecties(base_url):
             # TODO replace row[5] by feeding row[1] to fedora risearch:
             #  PREFIX dans: <http://dans.knaw.nl/ontologies/relations#> SELECT ?s WHERE {?s dans:isJumpoffPageFor <info:fedora/easy-dataset:13> . }
             #  https://stackoverflow.com/questions/56727817/how-to-send-form-data-using-python-requests
-            logging.debug("{} {}".format(value, row[5]))
-            row[4] = get_members(row[5], base_url)
+            logging.debug("{} {} {}".format(row[1], value, row[5]))
+            try:
+                row[4] = get_members(row[5], base_url)
+            except Exception as e:
+                logging.error("{}".format(e))
         csv_writer.writerow(row)
 
 
 def get_members(jumpoff_id, base_url):
-    try:
-        mu = get_jumpoff(jumpoff_id, "HTML_MU", base_url)
-        if mu.status_code == 404:
-            mu = get_jumpoff(jumpoff_id, "TXT_MU", base_url)
-    except Exception as e:
-        logging.error("{}".format(e))
-        return ""
+    mu = get_jumpoff(jumpoff_id, "HTML_MU", base_url)
+    if mu.status_code == 404:
+        mu = get_jumpoff(jumpoff_id, "TXT_MU", base_url)
     if 200 == mu.status_code:
-        return parse_jumpoff(jumpoff_id, mu.text)
+        urls = parse_jumpoff(mu.text)
+        return ",".join(urls).replace("[]", "\"") # TODO replace each url with "easy-dataset:NNN"
     else:
         logging.error("jumpoff not found {} {}".format(jumpoff_id, mu.status_code))
         return ""
@@ -59,11 +60,16 @@ def get_jumpoff(jumpof_id, format, base_url):
     return response
 
 
-def parse_jumpoff(jumpoff_id, jumpoff_page):
+def parse_jumpoff(jumpoff_page):
     # members: "easy-dataset:34099, easy-dataset:57698"
-    logging.debug("whoops, parsing not yet implemented {} {}".format(jumpoff_id, jumpoff_page))
-    result_links = ["blabla", jumpoff_id, "rabarbera"]
-    return ",".join(result_links).replace("[]", "\"")
+    soup = BeautifulSoup(jumpoff_page, "html.parser")
+    urls = set()
+    for a_tag in soup.findAll("a"):
+        href = a_tag.attrs.get("href")
+        if href == "" or href is None:
+            continue
+        urls.add(href)
+    return urls
 
 
 def main():
