@@ -46,8 +46,8 @@ def get_members(jumpoff_id, base_url):
     if mu.status_code == 404:
         mu = get_jumpoff_content(jumpoff_id, "TXT_MU", base_url)
     if 200 == mu.status_code:
-        urls = parse_jumpoff(mu.text)
-        return ",".join(urls).replace("[]", "\"")
+        dataset_ids = parse_jumpoff(mu.text)
+        return ",".join(dataset_ids).replace("[]", "\"")
     else:
         logging.error("jumpoff not found {} {}".format(jumpoff_id, mu.status_code))
         return ""
