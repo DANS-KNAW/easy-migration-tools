@@ -15,16 +15,16 @@ from easymigration.config import init
 def update_thematische_collecties(fedora_config):
     """
      Copies a Thematische-Collecties.csv from stdin to stdout.
-     Assumed columns: -,EASY-dataset-id,-,-,members,jumpoff-id
+     Assumed columns: -,EASY-dataset-id,-,-,members
      Empty members columns are filled by crawling jump of pages.
-     jumpoff-id is for temporal testing purposes
+     The first line is copied as is.
 
         Example: update_thematische_collecties.py  < OldThemCol.csv > NewThemCol.csv
     """
 
     auth = HTTPBasicAuth(fedora_config["user_name"], fedora_config["password"])
     base_url = fedora_config["base_url"]
-    risearch_url = "{}/fedora/risearch".format(base_url)
+    risearch_url = "{}/risearch".format(base_url)
 
     csv_reader = csv.reader(sys.stdin, delimiter=',')
     csv_writer = csv.writer(sys.stdout, delimiter=',')
@@ -69,7 +69,7 @@ def get_jumpoff_id(dataset_id, risearch_url, auth):
 
 
 def get_jumpoff_content(jumpoff_id, response_format, base_url):
-    url = "{}/fedora/objects/{}/datastreams/{}/content".format(base_url, jumpoff_id, response_format)
+    url = "{}/objects/{}/datastreams/{}/content".format(base_url, jumpoff_id, response_format)
     response = requests.get(url)
     logging.debug("status code: {} url: {}".format(response.status_code, url))
     return response
@@ -110,7 +110,8 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Copies an easy-convert-bag-to-deposit/src/main/assembly/dist/cfg/ThemathischeCollecties.csv '
                     'from stdin to stdout. '
-                    'Empty member fields will be updated by collecting links from the jumpoff page of the dataset. ',
+                    'Empty member fields will be updated by collecting links from the jumpoff page of the dataset. '
+                    'The first line is assumed to be a header and is copied as-is',
         epilog='Example: update_thematische_collecties.py < OldThemCol.csv > NewThemCol.csv'
     )
     update_thematische_collecties(config["fedora"])
