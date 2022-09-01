@@ -111,7 +111,7 @@ def main():
         description='Copies an easy-convert-bag-to-deposit/src/main/assembly/dist/cfg/ThemathischeCollecties.csv '
                     'from stdin to stdout. '
                     'Empty member fields will be updated by collecting links from the jumpoff page of the dataset. '
-                    'The first line is assumed to be a header and is copied as-is',
+                    'The first line of the CSV is assumed to be a header and is copied as-is.',
         epilog='Example: update_thematische_collecties.py < OldThemCol.csv > NewThemCol.csv'
     )
     update_thematische_collecties(config["fedora"])
