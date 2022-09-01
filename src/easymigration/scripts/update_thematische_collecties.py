@@ -16,7 +16,7 @@ def update_thematische_collecties(fedora_config):
     """
      Copies a Thematische-Collecties.csv from stdin to stdout.
      Assumed columns: -,EASY-dataset-id,-,-,members
-     Empty members columns are filled by crawling jump of pages.
+     Empty members columns are filled by crawling jump off pages.
      The first line is copied as is.
 
         Example: update_thematische_collecties.py  < OldThemCol.csv > NewThemCol.csv
