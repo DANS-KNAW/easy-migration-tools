@@ -26,18 +26,18 @@ def update_thematische_collecties(fedora_config):
     base_url = fedora_config["base_url"]
     risearch_url = "{}/risearch".format(base_url)
 
-    csv_reader = csv.reader(sys.stdin, delimiter=',')
-    csv_writer = csv.writer(sys.stdout, delimiter=',')
-    csv_writer.writerow(next(csv_reader))
+    csv_reader = csv.DictReader(sys.stdin, delimiter=',')
+    csv_writer = csv.DictWriter(sys.stdout, delimiter=',', fieldnames=csv_reader.fieldnames)
+    csv_writer.writeheader()
 
     for row in csv_reader:
-        if not ("easy-dataset" in row[4]):
-            logging.debug("{} {} {}".format(row[1], row[4], row[5]))
+        if not row["members"]:
+            logging.debug(row)
             try:
-                jumpoff_id = get_jumpoff_id(row[1], risearch_url, auth)
-                row[4] = get_members(jumpoff_id, base_url)
+                jumpoff_id = get_jumpoff_id(row["EASY-dataset-id"], risearch_url, auth)
+                row["members"] = get_members(jumpoff_id, base_url)
             except Exception as e:
-                logging.error("{} {}".format(row[1], e))
+                logging.error("{} FAILED {}".format(row, e))
         csv_writer.writerow(row)
 
 
