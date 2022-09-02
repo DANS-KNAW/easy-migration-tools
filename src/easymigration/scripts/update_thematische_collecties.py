@@ -113,7 +113,7 @@ def main():
                     'Empty member fields will be updated by collecting links from the jumpoff page of the dataset. '
                     'The first line of the CSV is assumed to be a header and is copied as-is.',
         epilog='Example: update_thematische_collecties.py < OldThemCol.csv > NewThemCol.csv'
-    )
+    ).parse_args()
     update_thematische_collecties(config["fedora"])
 
 
