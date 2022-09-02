@@ -3,7 +3,6 @@ from os.path import exists
 import yaml
 from pkgutil import get_data
 from logging import config as logconfig
-from sys import stderr
 import logging
 
 configuration_file = '.easy-migration-tools.yml'
@@ -14,11 +13,11 @@ configuration_file_locations = [configuration_file, os.path.expanduser('~/' + co
 def ensure_configuration_file_exists():
     config = find_config_file()
     if config is None:
-        stderr.writelines("No %s found; instantiating in current directory\n" % configuration_file)
+        print("No %s found; instantiating in current directory" % configuration_file)
         with open(configuration_file, 'wb') as f:
             example_cfg = get_data('easymigration', example_configuration_file)
             if example_cfg is None:
-                stderr.writelines("WARN: cannot find example-easy-migration-tools.yml\n")
+                print("WARN: cannot find example-easy-migration-tools.yml")
             else:
                 f.write(example_cfg)
 
