@@ -33,7 +33,7 @@ Use as input:
     Odyssee onderzoeksprojecten,easy-dataset:34359,thema,,"easy-dataset:34099"
 
 This tests a mix of (un)quoted, single/multiple dataset-ids in the CSV, existing/missing jumpoff-s,
-and various types ok links: (un)encoded URLs, (not)migrated datasets, various types of IDs and non-datasets. 
+and various types of links: (un)encoded URLs, (not)migrated datasets, various types of IDs and non-datasets. 
 
 * with 3 types of `<br>` html versus xhtml is supposed to be covered
   (this used to be a problem for easy-convert-bag-to-deposit)
