@@ -33,11 +33,12 @@ def update_thematische_collecties(fedora_config):
     for row in csv_reader:
         if not row["members"]:
             logging.debug(row)
-            try:
-                jumpoff_id = get_jumpoff_id(row["EASY-dataset-id"], risearch_url, auth)
-                row["members"] = get_members(jumpoff_id, base_url)
-            except Exception as e:
-                logging.error(f"{row} FAILED {e}")
+            for dataset_id in row["EASY-dataset-id"].split(","):
+                try:
+                    jumpoff_id = get_jumpoff_id(dataset_id, risearch_url, auth)
+                    row["members"] += get_members(jumpoff_id, base_url)
+                except Exception as e:
+                    logging.error(f"{e} PROCESSING {row}")
         csv_writer.writerow(row)
 
 
@@ -48,7 +49,7 @@ def get_members(jumpoff_id, base_url):
         logging.debug(f"{jumpoff_id}")
         mu = get_jumpoff_content(jumpoff_id, "TXT_MU", base_url)
     if 200 == mu.status_code:
-        dataset_ids = parse_jumpoff(mu.text)
+        dataset_ids = parse_jumpoff(mu.text, jumpoff_id)
         return ",".join(dataset_ids).replace("[]", "\"")
     else:
         logging.error(f"jumpoff not found {jumpoff_id} {mu.status_code}")
@@ -77,32 +78,32 @@ def get_jumpoff_content(jumpoff_id, response_format, base_url):
     return response
 
 
-def parse_jumpoff(jumpoff_page):
+def parse_jumpoff(jumpoff_page, jumpoff_id):
     # members: "easy-dataset:34099, easy-dataset:57698"
     soup = BeautifulSoup(jumpoff_page, "html.parser")
     dataset_ids = set()
     for a_tag in soup.findAll("a"):
         href = unquote(a_tag.attrs.get("href"))
-        logging.debug(f"resolving {href}")
+        logging.debug(f"resolving {href} in {jumpoff_id}")
         if "easy-dataset:" in href:
-            dataset_ids.add(re.sub(r'.+/', '', href))
+            dataset_ids.add(re.findall(r'easy-dataset:[0-9]+', href)[0])
             continue
         if re.search("(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*", href) is None:
-            logging.debug(f"Not a dataset link {href}")
+            logging.debug(f"Not a dataset link {href} in {jumpoff_id}")
             continue
         try:
             response = requests.get(href, allow_redirects=False, timeout=0.5)
         except Exception as e:
-            logging.error(f"{href} {e}")
+            logging.error(f"Could not resolve {href} in {jumpoff_id}: {e}")
             continue
         if response.status_code != 302:
-            logging.error(f"Not expected status code {response.status_code} for {href}")
+            logging.error(f"Expected status code 302 but got {response.status_code} for {href} in {jumpoff_id}")
             continue
         location = unquote(response.headers.get("location"))
-        if not "easy-dataset:" in location:
-            logging.error(f"Expecting 'easy-dataset:NNN' but {href} resolved to {location}")
+        if "easy-dataset:" not in location:
+            logging.error(f"Need 'easy-dataset:NNN' but {href} in {jumpoff_id} resolved to {location}")
             continue
-        dataset_ids.add(re.sub(r'.+/', '', location))
+        dataset_ids.add(re.findall(r'easy-dataset:[0-9]+', location)[0])
     return dataset_ids
 
 
