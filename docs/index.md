@@ -14,8 +14,8 @@ update_thematische_collecties.py < OldThemCol.csv > NewThemCol.csv
 DESCRIPTION
 -----------
 
-This module contains a variety of command line scripts to facilitate DANS Data Station management. Each script comes
-with a command line help.
+This module contains a variety of command line scripts to facilitate migration of datasets from EASY to a data-station.
+Each script comes with a command line help.
 
 
 INSTALLATION & CONFIGURATION
