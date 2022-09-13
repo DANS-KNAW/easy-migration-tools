@@ -24,7 +24,7 @@ def update_thematische_collecties(fedora_config):
 
     auth = HTTPBasicAuth(fedora_config["user_name"], fedora_config["password"])
     base_url = fedora_config["base_url"]
-    risearch_url = "{}/risearch".format(base_url)
+    risearch_url = f"{base_url}/risearch"
 
     csv_reader = csv.DictReader(sys.stdin, delimiter=',')
     csv_writer = csv.DictWriter(sys.stdout, delimiter=',', fieldnames=csv_reader.fieldnames)
@@ -33,23 +33,26 @@ def update_thematische_collecties(fedora_config):
     for row in csv_reader:
         if not row["members"]:
             logging.debug(row)
-            try:
-                jumpoff_id = get_jumpoff_id(row["EASY-dataset-id"], risearch_url, auth)
-                row["members"] = get_members(jumpoff_id, base_url)
-            except Exception as e:
-                logging.error("{} FAILED {}".format(row, e))
+            for dataset_id in row["EASY-dataset-id"].split(","):
+                try:
+                    jumpoff_id = get_jumpoff_id(dataset_id, risearch_url, auth)
+                    row["members"] += get_members(jumpoff_id, base_url)
+                except Exception as e:
+                    logging.error(f"{e} PROCESSING {row}")
         csv_writer.writerow(row)
 
 
 def get_members(jumpoff_id, base_url):
     mu = get_jumpoff_content(jumpoff_id, "HTML_MU", base_url)
+    logging.debug(f"{jumpoff_id}")
     if mu.status_code == 404:
+        logging.debug(f"{jumpoff_id}")
         mu = get_jumpoff_content(jumpoff_id, "TXT_MU", base_url)
     if 200 == mu.status_code:
-        dataset_ids = parse_jumpoff(mu.text)
+        dataset_ids = parse_jumpoff(mu.text, jumpoff_id)
         return ",".join(dataset_ids).replace("[]", "\"")
     else:
-        logging.error("jumpoff not found {} {}".format(jumpoff_id, mu.status_code))
+        logging.error(f"jumpoff not found {jumpoff_id} {mu.status_code}")
         return ""
 
 
@@ -63,44 +66,44 @@ def get_jumpoff_id(dataset_id, risearch_url, auth):
     params["format"] = "CSV"
 
     response = requests.get(risearch_url, params=params, auth=auth)
-    if response.status_code != 200:
-        raise Exception("Could not find jumpoff-id for {} response: {}".format(dataset_id, response))
-    return re.sub(r'.+/', '', response.text.strip().replace("\n", ""))
+    if response.status_code != 200 or "dans-jumpoff" not in response.text:
+        raise Exception(f"Could not find jumpoff-id for {dataset_id} response: {response}")
+    return re.findall(r'dans-jumpoff:[0-9]+', response.text)[0]
 
 
 def get_jumpoff_content(jumpoff_id, response_format, base_url):
-    url = "{}/objects/{}/datastreams/{}/content".format(base_url, jumpoff_id, response_format)
+    url = f"{base_url}/objects/{jumpoff_id}/datastreams/{response_format}/content"
     response = requests.get(url)
-    logging.debug("status code: {} url: {}".format(response.status_code, url))
+    logging.debug(f"status code: {response.status_code} url: {url}")
     return response
 
 
-def parse_jumpoff(jumpoff_page):
+def parse_jumpoff(jumpoff_page, jumpoff_id):
     # members: "easy-dataset:34099, easy-dataset:57698"
     soup = BeautifulSoup(jumpoff_page, "html.parser")
     dataset_ids = set()
     for a_tag in soup.findAll("a"):
         href = unquote(a_tag.attrs.get("href"))
-        logging.debug("resolving {}".format(href))
+        logging.debug(f"resolving {href} in {jumpoff_id}")
         if "easy-dataset:" in href:
-            dataset_ids.add(re.sub(r'.+/', '', href))
+            dataset_ids.add(re.findall(r'easy-dataset:[0-9]+', href)[0])
             continue
         if re.search("(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*", href) is None:
-            logging.debug("Not a dataset link {}".format(href))
+            logging.debug(f"Not a dataset link {href} in {jumpoff_id}")
             continue
         try:
             response = requests.get(href, allow_redirects=False, timeout=0.5)
         except Exception as e:
-            logging.error("{} {}".format(href, e))
+            logging.error(f"Could not resolve {href} in {jumpoff_id}: {e}")
             continue
         if response.status_code != 302:
-            logging.error("Not expected status code {} for {}".format(response.status_code, href))
+            logging.error(f"Expected status code 302 but got {response.status_code} for {href} in {jumpoff_id}")
             continue
         location = unquote(response.headers.get("location"))
-        if not "easy-dataset:" in location:
-            logging.error("Expecting 'easy-dataset:NNN' but {} resolved to {}".format(href, location))
+        if "easy-dataset:" not in location:
+            logging.error(f"Need 'easy-dataset:NNN' but {href} in {jumpoff_id} resolved to {location}")
             continue
-        dataset_ids.add(re.sub(r'.+/', '', location))
+        dataset_ids.add(re.findall(r'easy-dataset:[0-9]+', location)[0])
     return dataset_ids
 
 
