@@ -1,3 +1,5 @@
+dark_archive:
+  base_url: 'https://localhost:20120/'
 fedora:
   base_url: 'https://localhost:8080/fedora'
   user_name: 'changeMe'

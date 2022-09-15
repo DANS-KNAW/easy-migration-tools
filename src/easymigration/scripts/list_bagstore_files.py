@@ -9,7 +9,7 @@ import requests
 from xml.dom import minidom
 from easymigration.batch_processing import batch_process
 from easymigration.config import init
-from easymigration.pids_handling import load_pids
+from easymigration.pids_handling import non_empty_lines
 
 
 def find_files(doi, dark_url, csv_writer):
@@ -19,11 +19,11 @@ def find_files(doi, dark_url, csv_writer):
 
 
 def find_uuid(doi, bag_index_url):
-    #locate in bag-index
+    # locate in bag-index
     try:
         params = {'doi': doi}
-        response = requests.put(
-            bag_index_url + '/bag-index/search',
+        response = requests.get(
+            bag_index_url + 'search',
             params=params)
         response.raise_for_status()
     except requests.exceptions.RequestException as re:
@@ -64,9 +64,9 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='For each doi, list the files in the bag-store'
     )
-    pid_or_file = parser.add_mutually_exclusive_group()
-    pid_or_file.add_argument('-p', '--pid', dest='pid', help='Pid of a single dataset for which to find the files')
-    pid_or_file.add_argument('-d', '--datasets', dest='pid_file', help='The input file with the dataset pids')
+    parser.add_argument('-d', '--doi', dest='doi',
+                        help='Pid of a single dataset for which to find the files. '
+                             'When omitted, DOIs are read from stdin.')
     args = parser.parse_args()
 
     dark_url = config['dark_archive']['base_url']
@@ -75,13 +75,12 @@ def main():
     csv_writer = csv.DictWriter(sys.stdout, delimiter=',', fieldnames=fieldnames)
     csv_writer.writeheader()
 
-    if args.pid is not None:
-        find_files(args.pid, dark_url, csv_writer)
-
-    if args.pid_file is not None:
-        pids = load_pids(args.pid_file)
-        batch_process(pids,
-                      lambda pid: find_files(pid, dark_url, csv_writer))
+    if args.doi is not None:
+        find_files(args.doi, dark_url, csv_writer)
+    else:
+        dois = non_empty_lines(sys.stdin.read())
+        batch_process(dois,
+                      lambda doi: find_files(doi, dark_url, csv_writer))
 
 
 if __name__ == '__main__':
