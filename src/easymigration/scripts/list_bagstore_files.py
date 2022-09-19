@@ -17,25 +17,14 @@ def find_files(uuid, dark_archive, csv_writer):
     store_url = dark_archive["store_url"]
     metadata_url = f"{store_url}/bags/{uuid}/metadata"
     files_xml = get_file(f"{metadata_url}/files.xml")
-    if (files_xml):
+    if files_xml:
         ddm = get_file(f"{metadata_url}/dataset.xml")
-        if (ddm):
+        if ddm:
             doi = find_doi(ddm)
             if doi:
                 parse_files_xml(uuid, doi, files_xml, csv_writer)
             else:
                 logging.error(f"No DOI found for {uuid}")
-
-
-def find_uuid(doi, bag_index_url):
-    # locate in bag-index
-    response = requests.get(f"{bag_index_url}/search", params={"doi": doi})
-    if response.status_code == 404:
-        logging.error(f"{doi} not available: {response.status_code}")
-        return ""
-    elif response.status_code != 200:
-        raise Exception(f"{doi}: {response.status_code}")
-    return response.json()["result"][0]["bag-info"]["bag-id"]
 
 
 def get_file(url):
@@ -53,10 +42,9 @@ def get_file(url):
 def find_doi(ddm):
     identifier_items = minidom.parseString(ddm).getElementsByTagNameNS("http://purl.org/dc/terms/", "identifier")
     for elem in identifier_items:
-        logging.debug(elem)
-        type = elem.getAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "type")
-        logging.debug(f"type = {type}")
-        if type == "id-type:DOI":
+        id_type = elem.getAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "type")
+        logging.debug(f"type = {id_type}")
+        if id_type == "id-type:DOI":
             return elem.firstChild.nodeValue
     return ""
 
