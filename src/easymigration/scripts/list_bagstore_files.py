@@ -75,7 +75,7 @@ def main():
     )
     add_pid_args(parser)
     args = parser.parse_args()
-    csv_writer = create_csv() # after parsing to avoid output on --help
+    csv_writer = create_csv()  # after parsing to avoid output on --help
     process_pids(args, lambda pid: find_files(bag_store_url, pid, csv_writer))
 
 
