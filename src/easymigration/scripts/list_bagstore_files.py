@@ -58,21 +58,24 @@ def parse_files_xml(uuid, doi, files_xml, csv_writer):
         csv_writer.writerow(row)
 
 
-def main():
-    config = init()
-
+def create_csv():
     fieldnames = ["uuid", "doi", "path", "accessCategory"]
     csv_writer = csv.DictWriter(sys.stdout, delimiter=",", fieldnames=fieldnames)
     csv_writer.writeheader()
+    return csv_writer
 
+
+def main():
+    config = init()
     bag_store_url = config["dark_archive"]["store_url"]
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="For each UUID, list the files in the bag-store"
+        description="For each dataset (identified with a UUID), list the files in the bag-store"
     )
     add_pid_args(parser)
     args = parser.parse_args()
+    csv_writer = create_csv() # after parsing to avoid output on --help
     process_pids(args, lambda pid: find_files(bag_store_url, pid, csv_writer))
 
 
