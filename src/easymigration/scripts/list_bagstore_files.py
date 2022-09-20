@@ -9,7 +9,7 @@ import requests
 from xml.dom import minidom
 from easymigration.batch_processing import batch_process
 from easymigration.config import init
-from easymigration.pids_handling import non_empty_lines
+from easymigration.pids_handling import load_pids, add_pid_args, non_empty_lines
 
 
 def find_files(bag_store_url, uuid, csv_writer):
@@ -64,11 +64,7 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="For each UUID, list the files in the bag-store"
     )
-    pid_or_file = parser.add_mutually_exclusive_group()
-    pid_or_file.add_argument('-p', '--pid', dest='pid',
-                             help='Pid (UUID) of a single dataset for which to find the files.')
-    pid_or_file.add_argument('-d', '--datasets', dest='pid_file',
-                             help='The input file with the dataset pids (UUIDs)')
+    add_pid_args(parser)
     args = parser.parse_args()
 
     fieldnames = ["uuid", "doi", "path", "accessCategory"]
@@ -79,7 +75,7 @@ def main():
     if args.pid is not None:
         find_files(bag_store_url, args.pid, csv_writer)
     else:
-        pids = non_empty_lines(sys.stdin.read())
+        pids = load_pids(args.pid_file)
         batch_process(pids,
                       lambda pid: find_files(bag_store_url, pid, csv_writer))
 
