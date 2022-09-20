@@ -1,4 +1,4 @@
-# given a doi, retrieve the uuid and subsequently the files from the bag-store
+# given a UUID, retrieve the DOI and subsequently the files from the bag-store
 
 import argparse
 import csv
