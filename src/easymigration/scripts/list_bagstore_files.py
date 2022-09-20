@@ -12,19 +12,17 @@ from easymigration.config import init
 from easymigration.pids_handling import non_empty_lines
 
 
-def find_files(uuid, dark_archive, csv_writer):
+def find_files(bag_store_url, uuid, csv_writer):
     logging.debug(uuid)
-    store_url = dark_archive["store_url"]
-    metadata_url = f"{store_url}/bags/{uuid}/metadata"
+    metadata_url = f"{bag_store_url}/bags/{uuid}/metadata"
     files_xml = get_file(f"{metadata_url}/files.xml")
-    if files_xml:
-        ddm = get_file(f"{metadata_url}/dataset.xml")
-        if ddm:
-            doi = find_doi(ddm)
-            if doi:
-                parse_files_xml(uuid, doi, files_xml, csv_writer)
-            else:
-                logging.error(f"No DOI found for {uuid}")
+    ddm = get_file(f"{metadata_url}/dataset.xml")
+    if files_xml and ddm:
+        doi = find_doi(ddm)
+        if doi:
+            parse_files_xml(uuid, doi, files_xml, csv_writer)
+        else:
+            logging.error(f"No DOI found for {uuid}")
 
 
 def get_file(url):
@@ -64,25 +62,26 @@ def main():
     config = init()
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="For each doi, list the files in the bag-store"
+        description="For each UUID, list the files in the bag-store"
     )
-    parser.add_argument("-p", dest="pid",
-                        help="UUID of a bag for which to find the files. "
-                             "When omitted, UUIDs are read from stdin.")
+    pid_or_file = parser.add_mutually_exclusive_group()
+    pid_or_file.add_argument('-p', '--pid', dest='pid',
+                             help='Pid (UUID) of a single dataset for which to find the files.')
+    pid_or_file.add_argument('-d', '--datasets', dest='pid_file',
+                             help='The input file with the dataset pids (UUIDs)')
     args = parser.parse_args()
 
-    dark_archive = config["dark_archive"]
-
-    fieldnames = {"uuid", "doi", "path", "accessCategory"}
+    fieldnames = ["uuid", "doi", "path", "accessCategory"]
     csv_writer = csv.DictWriter(sys.stdout, delimiter=",", fieldnames=fieldnames)
     csv_writer.writeheader()
 
+    bag_store_url = config["dark_archive"]["store_url"]
     if args.pid is not None:
-        find_files(args.pid, dark_archive, csv_writer)
+        find_files(bag_store_url, args.pid, csv_writer)
     else:
         pids = non_empty_lines(sys.stdin.read())
         batch_process(pids,
-                      lambda pid: find_files(pid, dark_archive, csv_writer))
+                      lambda pid: find_files(bag_store_url, pid, csv_writer))
 
 
 if __name__ == "__main__":
