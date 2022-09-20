@@ -4,12 +4,12 @@ import argparse
 import csv
 import logging
 import sys
+from xml.dom import minidom
 
 import requests
-from xml.dom import minidom
-from easymigration.batch_processing import batch_process
+
 from easymigration.config import init
-from easymigration.pids_handling import load_pids, add_pid_args, non_empty_lines, process_pids
+from easymigration.pids_handling import add_pid_args, process_pids
 
 
 def find_files(bag_store_url, uuid, csv_writer):
