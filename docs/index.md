@@ -8,7 +8,8 @@ SYNOPSIS
 
 ```bash
 pip3 install easy-migration-tools
-update_thematische_collecties.py < OldThemCol.csv > NewThemCol.csv 
+update_thematische_collecties.py < OldThemCol.csv > NewThemCol.csv
+list-bagstore-files [-p UUID | -d uuids.txt | -d - < uuids.txt] > files.csv 
 ```
 
 DESCRIPTION

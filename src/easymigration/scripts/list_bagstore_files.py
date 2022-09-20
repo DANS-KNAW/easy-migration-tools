@@ -9,7 +9,7 @@ import requests
 from xml.dom import minidom
 from easymigration.batch_processing import batch_process
 from easymigration.config import init
-from easymigration.pids_handling import load_pids, add_pid_args, non_empty_lines
+from easymigration.pids_handling import load_pids, add_pid_args, non_empty_lines, process_pids
 
 
 def find_files(bag_store_url, uuid, csv_writer):
@@ -60,24 +60,20 @@ def parse_files_xml(uuid, doi, files_xml, csv_writer):
 
 def main():
     config = init()
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="For each UUID, list the files in the bag-store"
-    )
-    add_pid_args(parser)
-    args = parser.parse_args()
 
     fieldnames = ["uuid", "doi", "path", "accessCategory"]
     csv_writer = csv.DictWriter(sys.stdout, delimiter=",", fieldnames=fieldnames)
     csv_writer.writeheader()
 
     bag_store_url = config["dark_archive"]["store_url"]
-    if args.pid is not None:
-        find_files(bag_store_url, args.pid, csv_writer)
-    else:
-        pids = load_pids(args.pid_file)
-        batch_process(pids,
-                      lambda pid: find_files(bag_store_url, pid, csv_writer))
+
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="For each UUID, list the files in the bag-store"
+    )
+    add_pid_args(parser)
+    args = parser.parse_args()
+    process_pids(args, lambda pid: find_files(bag_store_url, pid, csv_writer))
 
 
 if __name__ == "__main__":
