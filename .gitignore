@@ -5,3 +5,5 @@
 /dist
 /data
 /.easy-migration-tools.yml
+/src/easymigration/__pycache__/
+/src/easymigration/scripts/__pycache__/
