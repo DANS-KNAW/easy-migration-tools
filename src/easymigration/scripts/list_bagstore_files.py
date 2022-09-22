@@ -35,7 +35,7 @@ def get_file(url):
 
 def find_ids(ddm):
     if not ddm:
-        return ["",""]
+        return ["", ""]
     ns = "http://purl.org/dc/terms/"
     items = minidom.parseString(ddm).getElementsByTagNameNS(ns, "identifier")
     id_strings = sorted(map(child_value, filter(is_id, items)))
@@ -43,7 +43,7 @@ def find_ids(ddm):
         return id_strings
     else:
         logging.error(f"Expecting [DOI,easy-dataset:NN]. Found {','.join(id_strings)}")
-        return ["",""]
+        return ["", ""]
 
 
 def child_value(elem):
@@ -52,9 +52,8 @@ def child_value(elem):
 
 def is_id(id_elem):
     ns = "http://www.w3.org/2001/XMLSchema-instance"
-    is_doi = id_elem.getAttributeNS(ns, "type") == "id-type:DOI"
-    is_dataset_id = id_elem.hasAttributeNS(ns, "type")
-    return is_doi or not is_dataset_id
+    is_dataset_id = child_value(id_elem).startswith('easy-dataset:')
+    return is_dataset_id or id_elem.getAttributeNS(ns, "type") == "id-type:DOI"
 
 
 def parse_files_xml(uuid, ids, files_xml, csv_writer):
