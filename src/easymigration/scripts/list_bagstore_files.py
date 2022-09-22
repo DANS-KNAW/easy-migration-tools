@@ -16,13 +16,9 @@ def find_files(bag_store_url, uuid, csv_writer):
     logging.debug(uuid)
     metadata_url = f"{bag_store_url}/bags/{uuid}/metadata"
     files_xml = get_file(f"{metadata_url}/files.xml")
-    ddm = get_file(f"{metadata_url}/dataset.xml")
-    if files_xml and ddm:
-        doi = find_doi(ddm)
-        if doi:
-            parse_files_xml(uuid, doi, files_xml, csv_writer)
-        else:
-            logging.error(f"No DOI found for {uuid}")
+    ddm_xml = get_file(f"{metadata_url}/dataset.xml")
+    if files_xml:
+        parse_files_xml(uuid, find_ids(ddm_xml), files_xml, csv_writer)
 
 
 def get_file(url):
@@ -37,29 +33,47 @@ def get_file(url):
         return response.text
 
 
-def find_doi(ddm):
-    identifier_items = minidom.parseString(ddm).getElementsByTagNameNS("http://purl.org/dc/terms/", "identifier")
-    for elem in identifier_items:
-        id_type = elem.getAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "type")
-        logging.debug(f"type = {id_type}")
-        if id_type == "id-type:DOI":
-            return elem.firstChild.nodeValue
-    return ""
+def find_ids(ddm):
+    if not ddm:
+        return ["",""]
+    ns = "http://purl.org/dc/terms/"
+    items = minidom.parseString(ddm).getElementsByTagNameNS(ns, "identifier")
+    id_strings = sorted(map(child_value, filter(is_id, items)))
+    if len(id_strings) == 2:
+        return id_strings
+    else:
+        logging.error(f"Expecting [DOI,easy-dataset:NN]. Found {','.join(id_strings)}")
+        return ["",""]
 
 
-def parse_files_xml(uuid, doi, files_xml, csv_writer):
+def child_value(elem):
+    return elem.firstChild.nodeValue
+
+
+def is_id(id_elem):
+    ns = "http://www.w3.org/2001/XMLSchema-instance"
+    is_doi = id_elem.getAttributeNS(ns, "type") == "id-type:DOI"
+    is_dataset_id = id_elem.hasAttributeNS(ns, "type")
+    return is_doi or not is_dataset_id
+
+
+def parse_files_xml(uuid, ids, files_xml, csv_writer):
     file_items = minidom.parseString(files_xml).getElementsByTagName("file")
     for elem in file_items:
         access = elem.getElementsByTagName("accessibleToRights")
         access_text = ""
         if access is not None and len(access) == 1:
             access_text = access[0].firstChild.nodeValue
-        row = {"uuid": uuid, "doi": doi, "path": elem.attributes["filepath"].value, "accessCategory": access_text}
-        csv_writer.writerow(row)
+        csv_writer.writerow({"uuid": uuid,
+                             "doi": ids[0],
+                             "dataset-id": ids[1],
+                             "path": elem.attributes["filepath"].value,
+                             "accessCategory": access_text
+                             })
 
 
 def create_csv():
-    fieldnames = ["uuid", "doi", "path", "accessCategory"]
+    fieldnames = ["uuid", "doi", "dataset-id", "path", "accessCategory"]
     csv_writer = csv.DictWriter(sys.stdout, delimiter=",", fieldnames=fieldnames)
     csv_writer.writeheader()
     return csv_writer
@@ -75,7 +89,7 @@ def main():
     )
     add_pid_args(parser)
     args = parser.parse_args()
-    csv_writer = create_csv()  # after parsing to avoid output on --help
+    csv_writer = create_csv()  # after parsing CLI to avoid output on --help
     process_pids(args, lambda pid: find_files(bag_store_url, pid, csv_writer))
 
 

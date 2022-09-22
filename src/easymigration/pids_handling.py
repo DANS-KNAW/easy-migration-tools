@@ -19,7 +19,7 @@ def load_pids(file_path):
 
 
 def add_pid_args(parser):
-    pids = parser.add_mutually_exclusive_group(required=False)
+    pids = parser.add_mutually_exclusive_group(required=True)
     pids.add_argument('-p', '--pid', dest='pid',
                       help='The ID of a single dataset')
     pids.add_argument('-d', '--datasets', dest='pid_file',
@@ -35,5 +35,5 @@ def process_pids(args, process_action_func, delay=0.1, fail_on_first_error=True)
                       delay,
                       fail_on_first_error)
     else:
-        raise Exception("ArgumentParser did not require exactly one of the destinations "
-                        f"'pid' or 'pid_file', see for example add_pid_args")
+        raise Exception("Programming error: ArgumentParser did not require exactly one of the 'dest'-s  "
+                        "'pid' or 'pid_file', please call add_pid_args or an equivalent")
