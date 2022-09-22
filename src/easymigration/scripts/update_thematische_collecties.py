@@ -91,18 +91,18 @@ def parse_jumpoff(jumpoff_page, jumpoff_id):
         if re.search("(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*", href) is None:
             logging.debug(f"Not a dataset link {href} in {jumpoff_id}")
             continue
-        replaced = re.sub("http://dx.doi.org", "https://doi.org", href)
+        replaced_href = re.sub("http://dx.doi.org", "https://doi.org", href)
         try:
-            response = requests.get(replaced, allow_redirects=False, timeout=0.5)
+            response = requests.get(replaced_href, allow_redirects=False, timeout=0.5)
         except Exception as e:
-            logging.error(f"Could not resolve {replaced} in {jumpoff_id}: {e}")
+            logging.error(f"Could not resolve {replaced_href} in {jumpoff_id}: {e}")
             continue
         if response.status_code != 302:
-            logging.error(f"Expected status code 302 but got {response.status_code} for {replaced} in {jumpoff_id}")
+            logging.error(f"Expected status code 302 but got {response.status_code} for {replaced_href} in {jumpoff_id}")
             continue
         location = unquote(response.headers.get("location"))
         if "easy-dataset:" not in location:
-            logging.error(f"Need 'easy-dataset:NNN' but {replaced} in {jumpoff_id} resolved to {location}")
+            logging.error(f"Need 'easy-dataset:NNN' but {replaced_href} in {jumpoff_id} resolved to {location}")
             continue
         dataset_ids.add(re.findall(r'easy-dataset:[0-9]+', location)[0])
     return dataset_ids
