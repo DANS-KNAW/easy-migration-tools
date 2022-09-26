@@ -17,8 +17,11 @@ def find_files(bag_store_url, uuid, csv_writer):
     metadata_url = f"{bag_store_url}/bags/{uuid}/metadata"
     files_xml = get_file(f"{metadata_url}/files.xml")
     ddm_xml = get_file(f"{metadata_url}/dataset.xml")
-    if files_xml:
-        parse_files_xml(uuid, find_ids(ddm_xml), files_xml, csv_writer)
+    if files_xml and ddm_xml:
+        try:
+            parse_files_xml(uuid, find_ids(ddm_xml), files_xml, csv_writer, find_rights(ddm_xml))
+        except Exception as e:
+            logging.error(f"{uuid} FAILED: {e}")
 
 
 def get_file(url):
@@ -34,8 +37,6 @@ def get_file(url):
 
 
 def find_ids(ddm):
-    if not ddm:
-        return ["", ""]
     ns = "http://purl.org/dc/terms/"
     items = minidom.parseString(ddm).getElementsByTagNameNS(ns, "identifier")
     id_strings = sorted(map(child_value, filter(is_id, items)))
@@ -44,6 +45,19 @@ def find_ids(ddm):
     else:
         logging.error(f"Expecting [DOI,easy-dataset:NN]. Found {','.join(id_strings)}")
         return ["", ""]
+
+
+def find_rights(ddm):
+    ns = "http://easy.dans.knaw.nl/schemas/md/ddm/"
+    items = minidom.parseString(ddm).getElementsByTagNameNS(ns, "accessRights")
+    m = {'ANONYMOUS_ACCESS': 'ANONYMOUS',
+         'OPEN_ACCESS_FOR_REGISTERED_USERS': 'KNOWN',
+         'GROUP_ACCESS': 'RESTRICTED_GROUP',
+         'REQUEST_PERMISSION': 'RESTRICTED_REQUEST',
+         'OPEN_ACCESS': 'ANONYMOUS',
+         'NO_ACCESS': 'RESTRICTED',
+         }
+    return m[child_value(items[0])]
 
 
 def child_value(elem):
@@ -56,19 +70,20 @@ def is_id(id_elem):
     return is_dataset_id or id_elem.getAttributeNS(ns, "type") == "id-type:DOI"
 
 
-def parse_files_xml(uuid, ids, files_xml, csv_writer):
+def parse_files_xml(uuid, ids, files_xml, csv_writer, rights):
+    logging.debug(rights)
     file_items = minidom.parseString(files_xml).getElementsByTagName("file")
     for elem in file_items:
         access = elem.getElementsByTagName("accessibleToRights")
-        access_text = ""
         if access is not None and len(access) == 1:
-            access_text = access[0].firstChild.nodeValue
-        csv_writer.writerow({"uuid": uuid,
-                             "doi": ids[0],
-                             "dataset-id": ids[1],
-                             "path": elem.attributes["filepath"].value,
-                             "accessCategory": access_text
-                             })
+            rights = access[0].firstChild.nodeValue
+        row = {"uuid": uuid,
+               "doi": ids[0],
+               "dataset_id": ids[1],
+               "path": elem.attributes["filepath"].value,
+               "accessible_to_rights": rights
+               }
+        csv_writer.writerow(row)
 
 
 def create_csv():
