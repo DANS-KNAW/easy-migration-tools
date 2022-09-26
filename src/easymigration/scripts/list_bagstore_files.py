@@ -79,9 +79,9 @@ def parse_files_xml(uuid, ids, files_xml, csv_writer, rights):
             rights = access[0].firstChild.nodeValue
         row = {"uuid": uuid,
                "doi": ids[0],
-               "dataset-id": ids[1],
+               "dataset_id": ids[1],
                "path": elem.attributes["filepath"].value,
-               "accessCategory": rights
+               "accessible_to_rights": rights
                }
         csv_writer.writerow(row)
 
