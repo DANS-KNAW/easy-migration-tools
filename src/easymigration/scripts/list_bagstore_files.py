@@ -87,7 +87,7 @@ def parse_files_xml(uuid, ids, files_xml, csv_writer, rights):
 
 
 def create_csv():
-    fieldnames = ["uuid", "doi", "dataset-id", "path", "accessCategory"]
+    fieldnames = ["uuid", "doi", "dataset_id", "path", "accessible_to_rights"]
     csv_writer = csv.DictWriter(sys.stdout, delimiter=",", fieldnames=fieldnames)
     csv_writer.writeheader()
     return csv_writer
