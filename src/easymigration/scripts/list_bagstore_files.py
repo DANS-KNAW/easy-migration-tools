@@ -3,6 +3,7 @@
 import argparse
 import csv
 import logging
+import re
 import sys
 from xml.dom import minidom
 
@@ -33,7 +34,28 @@ def get_file(url):
     elif response.status_code != 200:
         raise Exception(f"status {response.status_code} : {url}")
     else:
-        return response.text
+        return convert_encoding(response.text)
+
+
+def convert_encoding(str):
+    d = "[0-9a-fA-F]"
+    dd = f"<{d}{d}>"
+    b2 = f"<[a-dA-D]{d}>{dd}"
+    b3 = f"<[eE]{d}>{dd}{dd}"
+    b4 = f"<[fF]{d}>{dd}{dd}{dd}"
+    regexp = f"(?s)(({b2})|({b3})|({b4}))"
+    converted = re.sub(regexp, convert_encoding_match, str)
+    logging.debug(converted)
+    return converted
+
+
+def convert_encoding_match(match_obj):
+    match_group = match_obj.group()
+    if match_group is not None:
+        logging.debug(match_group)
+        hex_string = re.sub("[<>]", "", match_group)
+        return bytes.fromhex(hex_string).decode()
+    return match_group
 
 
 def find_ids(ddm):
