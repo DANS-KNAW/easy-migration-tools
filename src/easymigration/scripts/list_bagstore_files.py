@@ -44,9 +44,7 @@ def convert_encoding(str):
     b3 = f"<[eE]{d}>{dd}{dd}"
     b4 = f"<[fF]{d}>{dd}{dd}{dd}"
     regexp = f"(?s)(({b2})|({b3})|({b4}))"
-    converted = re.sub(regexp, convert_encoding_match, str)
-    logging.debug(converted)
-    return converted
+    return re.sub(regexp, convert_encoding_match, str)
 
 
 def convert_encoding_match(match_obj):
