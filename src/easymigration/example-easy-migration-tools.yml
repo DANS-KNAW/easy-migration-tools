@@ -1,6 +1,6 @@
 dark_archive:
-  store_url: 'https://localhost:20110'
-  index_url: 'https://localhost:20120/'
+  store_url: 'https://darkarchive.dans.knaw.nl/bag-store/'
+  index_url: 'https://darkarchive.dans.knaw.nl/bag-index/'
 fedora:
   base_url: 'https://localhost:8080/fedora'
   user_name: 'changeMe'
