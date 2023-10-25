@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Development - easy-migration-tools</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Development";
+        var mkdocs_page_input_path = "dev.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> easy-migration-tools
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Manual</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Development</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">easy-migration-tools</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li><li>Development</li>
+    <li class="wy-breadcrumbs-aside">
+        <a href="https://github.com/DANS-KNAW/easy-migration-tools/edit/master/docs/dev.md"> Edit on DANS-KNAW/easy-migration-tools</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="general-notes">General notes<a class="headerlink" href="#general-notes" title="Permanent link">&para;</a></h1>
+<p>See https://dans-knaw.github.io/dans-datastation-tools/dev/</p>
+<h1 id="manual-test-with-deasy">Manual test with deasy<a class="headerlink" href="#manual-test-with-deasy" title="Permanent link">&para;</a></h1>
+<h2 id="update_thematische_collecties">update_thematische_collecties<a class="headerlink" href="#update_thematische_collecties" title="Permanent link">&para;</a></h2>
+<p>Out of the box jumpoff pages don't refer to datasets.
+Use the web interface and an admin account to create a jumpoff page for <code>easy-dataset:12</code>.
+The validate button allows to enter plain HTML:</p>
+<div class="codehilite"><pre><span></span><code>&lt;div class=&quot;jumpoffpage&quot;&gt;
+    &lt;p class=&quot;jumpoffpage&quot;&gt;&lt;a
+            href=&quot;http://persistent-identifier.nl/?identifier=urn:nbn:nl:ui:13-jpe-eqh&quot;&gt;a12753&lt;/a&gt; and &lt;a
+            href=&quot;https://doi.org/10.17026%2Fdans-zf5-xx5n&quot;&gt;p&lt;/a&gt;&lt;br/&gt; and &lt;a
+            href=&quot;https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:255208&quot;&gt;q&lt;/a&gt;&lt;br&gt; and &lt;a
+            href=&quot;http://www.persistent-identifier.nl/?identifier=urn%3Anbn%3Anl%3Aui%3A13-af-6wjo&quot;&gt;x&lt;/a&gt;&lt;br&gt;&lt;/br&gt; and &lt;a
+            href=&quot;http://www.persistent-identifier.nl/?identifier=urn:nbn:nl:ui:13-yufi-k7&quot;&gt;migrated&lt;/a&gt; and &lt;a
+            href=&quot;http://www.talkofeurope.eu/&quot;&gt;not a dataset&lt;/a&gt;...
+    &lt;/p&gt;
+&lt;/div&gt;
+</code></pre></div>
+
+<p>Use as input:</p>
+<div class="codehilite"><pre><span></span><code>name,EASY-dataset-id,type,comment,members
+Aeres Milieu,easy-dataset:9,organisatie,,
+bleekneusjes,&quot;easy-dataset:10&quot;,organisatie,,
+Sweco,&quot;easy-dataset:12,easy-dataset:22,easy-dataset:11&quot;,organisatie,,
+Odyssee onderzoeksprojecten,easy-dataset:34359,thema,,&quot;easy-dataset:34099&quot;
+</code></pre></div>
+
+<p>This tests a mix of (un)quoted, single/multiple dataset-ids in the CSV, existing/missing jumpoff-s,
+and various types of links: (un)encoded URLs, (not)migrated datasets, various types of IDs and non-datasets. </p>
+<ul>
+<li>with 3 types of <code>&lt;br&gt;</code> html versus xhtml is supposed to be covered
+  (this used to be a problem for easy-convert-bag-to-deposit)
+  the real proof of the xhtml pudding is <code>dans-jumpoff:3931</code> on production for <code>easy-dataset:34359</code></li>
+<li>
+<p><code>deasy</code> only produces jumpoff-s with a <code>HTML_MU</code> datastream. On production, possibly one of the jumpoff pages for 
+  <code>easy-dataset:34359</code>, <code>easy-dataset:33834</code>, <code>easy-dataset:33895</code>, <code>easy-dataset:33976</code>, <code>easy-dataset:64608</code>
+  returns data for the <code>TXT_MU</code> datastream instead:</p>
+<p>http://localhost:8080/fedora/objects/dans-jumpoff:NNN/datastreams/TXT_MU/content</p>
+</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Manual"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
